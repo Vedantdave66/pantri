@@ -5,7 +5,7 @@
 
 do $$
 declare
-  owner_user_id uuid := '00000000-0000-0000-0000-000000000000';
+  owner_user_id uuid := '1468a17d-df76-49a9-a79c-450c829bacbd';
 begin
   insert into items (user_id, name, unit, current_quantity, reorder_threshold, category) values
     (owner_user_id, 'Flour', 'bags', 2, 1, 'Dry Goods'),
