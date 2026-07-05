@@ -1,0 +1,22 @@
+{
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/manifest.json", "dest": "frontend/manifest.json" },
+    { "src": "/icon-192.png", "dest": "frontend/icon-192.png" },
+    { "src": "/icon-512.png", "dest": "frontend/icon-512.png" },
+    { "src": "/apple-touch-icon.png", "dest": "frontend/apple-touch-icon.png" },
+    { "src": "/assets/(.*)", "dest": "frontend/assets/$1" },
+    { "src": "/(.*)", "dest": "frontend/index.html" }
+  ]
+}
