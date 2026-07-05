@@ -5,7 +5,6 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from jose import jwt, JWTError
 from pydantic import BaseModel
 from supabase import create_client, Client
 
@@ -13,7 +12,6 @@ load_dotenv()
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
-JWT_SECRET = os.environ.get("JWT_SECRET")
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
 
 app = FastAPI(title="Pantri API")
@@ -42,21 +40,16 @@ def get_current_user_id(authorization: Optional[str] = Header(None)) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
     token = authorization.removeprefix("Bearer ").strip()
-    if not JWT_SECRET:
-        raise HTTPException(status_code=500, detail="JWT secret is not configured")
+
+    supabase = get_supabase()
     try:
-        payload = jwt.decode(
-            token,
-            JWT_SECRET,
-            algorithms=["HS256"],
-            options={"verify_aud": False},
-        )
-    except JWTError:
+        result = supabase.auth.get_user(token)
+    except Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-    return user_id
+
+    if not result or not result.user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+    return result.user.id
 
 
 def now_iso() -> str:
