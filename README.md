@@ -42,7 +42,7 @@ pantri/
 cd api
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT_SECRET, DATABASE_URL
+cp .env.example .env   # fill in SUPABASE_URL, SUPABASE_SERVICE_KEY, DATABASE_URL
 uvicorn index:app --reload --port 8000
 ```
 
@@ -50,8 +50,13 @@ Env vars:
 
 - `SUPABASE_URL` — your Supabase project URL
 - `SUPABASE_SERVICE_KEY` — the **service role** key (server-side only, never expose to the frontend)
-- `JWT_SECRET` — Supabase project JWT secret (Settings → API), used to verify the access tokens issued by `/api/auth/login`
 - `DATABASE_URL` — Supabase Postgres connection string (reserved for future direct-SQL needs)
+
+Note: the API validates `Authorization: Bearer <token>` headers by asking Supabase's
+own Auth server to verify the token (`auth.get_user`), rather than decoding the JWT
+locally. This avoids needing to keep a JWT signing secret in sync — it works whether
+the project signs tokens with the legacy shared HS256 secret or the newer asymmetric
+signing keys.
 
 ### 3. Frontend (React + Vite)
 
@@ -90,7 +95,7 @@ from `/api/auth/login`.
 `vercel.json` builds the frontend with `@vercel/static-build` and the API with
 `@vercel/python`, routing `/api/*` to the FastAPI app and everything else to
 the built frontend. Set the backend env vars (`SUPABASE_URL`,
-`SUPABASE_SERVICE_KEY`, `JWT_SECRET`, `DATABASE_URL`) and frontend env vars
+`SUPABASE_SERVICE_KEY`, `DATABASE_URL`) and frontend env vars
 (`VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in the Vercel
 project settings before deploying. Since the API is served from the same
 domain under `/api`, `VITE_API_URL` can be left empty in production.
