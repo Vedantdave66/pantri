@@ -1,8 +1,17 @@
--- Pantri seed data: Popular Pizza inventory.
--- For a fresh project: run schema.sql + migration_v2.sql first, create the
--- owner in Supabase Auth, then run this. On an existing database use
--- reset_inventory.sql instead (it wipes test data before inserting).
+-- Popular Pizza inventory reset
+-- Replaces ALL test items with the real inventory list, clears old test
+-- count history, and sets the owner's display name.
+-- Run in the Supabase SQL editor. Destructive: wipes items + count_logs.
 
+-- 1. Owner display name (edit the name if you prefer something else)
+update profiles set full_name = 'Vedant Dave' where role = 'owner';
+
+-- 2. Wipe test data (count_logs first: it references items)
+delete from count_logs;
+delete from items;
+
+-- 3. Real inventory. Starting quantities are set a bit above threshold;
+--    run a Daily Count to record actual stock.
 do $$
 declare
   owner_user_id uuid;
