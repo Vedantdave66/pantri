@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { getSession } from './api.js'
+import { useEffect, useState } from 'react'
+import { api, getSession, setSession } from './api.js'
 import Login from './screens/Login.jsx'
 import PinLogin from './screens/PinLogin.jsx'
 import Dashboard from './screens/Dashboard.jsx'
@@ -22,6 +22,24 @@ export default function App() {
     setTab(s?.role === 'employee' ? 'count' : 'home')
     setShowReorder(false)
   }
+
+  // Re-sync role/name from the server so profile edits (e.g. display name)
+  // show up without forcing a fresh login.
+  useEffect(() => {
+    if (!session) return
+    api
+      .me()
+      .then((me) => {
+        if (me && (me.full_name !== session.name || me.role !== session.role)) {
+          setSession({ token: session.token, role: me.role, name: me.full_name || '' })
+          setSessionState(getSession())
+        }
+      })
+      .catch(() => {
+        // 401s are already handled globally by the api client
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (!session) {
     return (

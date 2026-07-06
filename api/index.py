@@ -53,6 +53,14 @@ def _employee_password(pin: str, user_id: str) -> str:
     return f"pantri-pin:{pin}:{user_id}"
 
 
+def display_name(full_name: Optional[str], email: Optional[str]) -> Optional[str]:
+    name = (full_name or "").strip()
+    if name:
+        return name
+    local = (email or "").split("@")[0]
+    return (local[:1].upper() + local[1:]) if local else None
+
+
 def get_current_profile(authorization: Optional[str] = Header(None)) -> dict:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing bearer token")
@@ -69,7 +77,9 @@ def get_current_profile(authorization: Optional[str] = Header(None)) -> dict:
     res = supabase.table("profiles").select("*").eq("id", result.user.id).execute()
     if not res.data:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No profile for this account")
-    return res.data[0]
+    profile = dict(res.data[0])
+    profile["email"] = result.user.email
+    return profile
 
 
 def require_owner(profile: dict = Depends(get_current_profile)) -> dict:
@@ -165,7 +175,7 @@ def login(body: LoginRequest):
             "id": result.user.id,
             "email": result.user.email,
             "role": profile["role"],
-            "full_name": profile.get("full_name"),
+            "full_name": display_name(profile.get("full_name"), result.user.email),
         },
     }
 
@@ -221,7 +231,7 @@ def me(profile: dict = Depends(get_current_profile)):
     return {
         "id": profile["id"],
         "role": profile["role"],
-        "full_name": profile.get("full_name"),
+        "full_name": display_name(profile.get("full_name"), profile.get("email")),
     }
 
 
