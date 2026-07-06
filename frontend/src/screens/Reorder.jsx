@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import Toast from '../components/Toast.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
-import { ShareIcon, AlertIcon, CheckIcon, ChevronIcon, SparkleIcon } from '../components/Icons.jsx'
+import { ShareIcon, CheckIcon, ChevronIcon } from '../components/Icons.jsx'
 
 function buildShareText(items) {
   const date = new Date().toLocaleDateString('en-US', {
@@ -47,7 +47,7 @@ export default function Reorder({ onBack }) {
     }
     try {
       await navigator.clipboard.writeText(text)
-      setToast('Copied to clipboard')
+      setToast('Copied')
     } catch {
       setToast('Unable to copy')
     }
@@ -60,14 +60,14 @@ export default function Reorder({ onBack }) {
         <div>
           {onBack && (
             <button className="back-btn" onClick={onBack}>
-              <ChevronIcon size={16} /> Back
+              <ChevronIcon size={15} /> Back
             </button>
           )}
           <h1 className="screen-title">Reorder</h1>
         </div>
         {items && items.length > 0 && (
           <button className="header-action" onClick={handleShare}>
-            <ShareIcon size={17} /> Share
+            <ShareIcon size={16} /> Share
           </button>
         )}
       </header>
@@ -75,36 +75,32 @@ export default function Reorder({ onBack }) {
       {error && <div className="banner-error">{error}</div>}
 
       {items === null ? (
-        <SkeletonList rows={3} height={82} />
+        <SkeletonList rows={3} height={56} />
       ) : items.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-check"><CheckIcon size={40} strokeWidth={2.2} /></div>
-          <div className="empty-title">
-            You're fully stocked{' '}
-            <span className="twinkle" style={{ display: 'inline-block', color: 'var(--saffron)' }}>
-              <SparkleIcon size={19} />
-            </span>
-          </div>
-          <div className="empty-subtitle">Check back after next count</div>
+          <div className="empty-icon"><CheckIcon size={30} strokeWidth={2.2} /></div>
+          <div className="empty-title">Fully stocked</div>
+          <div className="empty-subtitle">Nothing is below par right now</div>
         </div>
       ) : (
         <>
-          <div className="reorder-banner rise" style={{ '--i': 0 }}>
-            <AlertIcon size={19} />
-            {items.length} item{items.length === 1 ? '' : 's'} need restocking
+          <div className="reorder-summary">
+            {items.length} item{items.length === 1 ? '' : 's'} below par
           </div>
-          <div className="card-list">
-            {items.map((item, i) => {
-              const short = Math.max(0, item.reorder_threshold - item.current_quantity)
+          <div className="list-group">
+            {items.map((item) => {
+              const need = Math.max(0, item.reorder_threshold - item.current_quantity)
               return (
-                <div className="reorder-card rise" style={{ '--i': i + 1 }} key={item.id}>
-                  <div className="reorder-body">
-                    <div className="item-name">{item.name}</div>
-                    <div className="reorder-detail">
-                      {item.current_quantity} on hand · reorder at {item.reorder_threshold} {item.unit}
+                <div className="list-row" key={item.id}>
+                  <div className="row-main">
+                    <div className="row-title">{item.name}</div>
+                    <div className="row-sub">
+                      {item.current_quantity} on hand · par {item.reorder_threshold}
                     </div>
                   </div>
-                  <span className="short-pill">Short {short} {item.unit}</span>
+                  <span className="order-amount">
+                    Order {need} {item.unit}
+                  </span>
                 </div>
               )
             })}
