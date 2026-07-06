@@ -1,13 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api.js'
-import { CATEGORIES, groupByCategory, categoryColor } from '../constants.js'
+import { CATEGORIES, groupByCategory } from '../constants.js'
 import ItemFormSheet from '../components/ItemFormSheet.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
-import { SearchIcon, ChevronIcon, PlusIcon, BoxIcon } from '../components/Icons.jsx'
-
-function tint(hex) {
-  return `color-mix(in srgb, ${hex} 13%, white)`
-}
+import { SearchIcon, ChevronIcon, PlusIcon } from '../components/Icons.jsx'
 
 export default function Inventory({ addSignal }) {
   const [items, setItems] = useState(null)
@@ -78,20 +74,18 @@ export default function Inventory({ addSignal }) {
       <header className="screen-header">
         <div>
           <h1 className="screen-title">Inventory</h1>
-          <div className="screen-subtitle">
-            {items ? `${items.length} items tracked` : 'Loading…'}
-          </div>
+          {items && <div className="screen-subtitle">{items.length} items</div>}
         </div>
       </header>
 
       <div className="search-bar-wrap">
         <input
           className="search-bar"
-          placeholder="Search items…"
+          placeholder="Search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <span className="search-icon"><SearchIcon size={19} /></span>
+        <span className="search-icon"><SearchIcon size={18} /></span>
       </div>
 
       <div className="chips-row">
@@ -110,63 +104,50 @@ export default function Inventory({ addSignal }) {
       {error && <div className="banner-error">{error}</div>}
 
       {items === null ? (
-        <SkeletonList rows={5} height={74} />
+        <SkeletonList rows={6} height={56} />
       ) : grouped.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-check" style={{ background: 'var(--saffron-soft)', color: 'var(--saffron-deep)' }}>
-            <BoxIcon size={38} />
-          </div>
           <div className="empty-title">Nothing here</div>
           <div className="empty-subtitle">
             {query || filter !== 'All'
               ? 'Try a different search or filter.'
-              : 'Tap + to add your first inventory item.'}
+              : 'Add your first item with the + button.'}
           </div>
         </div>
       ) : (
-        (() => {
-          let runningIndex = 0
-          return grouped.map((group) => {
-            const groupStart = runningIndex
-            runningIndex += group.items.length
-            return (
-              <div key={group.category}>
-                <div className="category-title">{group.category}</div>
-                <div className="card-list">
-                  {group.items.map((item, i) => {
-                    const low = item.current_quantity <= item.reorder_threshold
-                    const color = categoryColor(item.category)
-                    return (
-                      <button
-                        key={item.id}
-                        className="item-card rise"
-                        style={{ '--i': groupStart + i }}
-                        onClick={() => setEditingItem(item)}
-                      >
-                        <span className="category-ring" style={{ '--ring-soft': tint(color) }}>
-                          <span className="category-dot" style={{ background: color }} />
-                        </span>
-                        <div className="item-info">
-                          <div className="item-name">{item.name}</div>
-                          <div className="item-unit">{item.unit}</div>
-                        </div>
-                        <span className={`qty-pill ${low ? 'low' : 'ok'}`}>
-                          {low && <span className="low-dot" />}
-                          {item.current_quantity} {item.unit}
-                        </span>
-                        <span className="item-chevron"><ChevronIcon size={18} /></span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })
-        })()
+        grouped.map((group) => (
+          <div key={group.category}>
+            <div className="group-label">{group.category}</div>
+            <div className="list-group">
+              {group.items.map((item) => {
+                const low = item.current_quantity <= item.reorder_threshold
+                return (
+                  <button
+                    key={item.id}
+                    className="list-row"
+                    onClick={() => setEditingItem(item)}
+                  >
+                    <div className="row-main">
+                      <div className="row-title">{item.name}</div>
+                      <div className="row-sub">par {item.reorder_threshold}</div>
+                    </div>
+                    <div className="row-meta">
+                      <div className={`row-qty ${low ? 'low' : ''}`}>
+                        {item.current_quantity} {item.unit}
+                      </div>
+                      {low && <div className="row-low-tag">Below par</div>}
+                    </div>
+                    <span className="row-chevron"><ChevronIcon size={17} /></span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))
       )}
 
-      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add Item">
-        <PlusIcon size={26} strokeWidth={2.2} />
+      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add item">
+        <PlusIcon size={24} strokeWidth={2} />
       </button>
 
       {showAdd && (

@@ -39,7 +39,7 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
   }
 
   return (
-    <BottomSheet title={isEdit ? item.name : 'Add Item'} onClose={onClose}>
+    <BottomSheet title={isEdit ? item.name : 'Add item'} onClose={onClose}>
       <form className="sheet-form" onSubmit={handleSubmit}>
         {error && <div className="error-text">{error}</div>}
 
@@ -50,7 +50,6 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
             className="text-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Basmati Rice"
           />
         </div>
 
@@ -61,7 +60,7 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
             className="text-input"
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
-            placeholder="e.g. bags, lbs, cases"
+            placeholder="bags, lbs, cases…"
           />
         </div>
 
@@ -80,7 +79,7 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
         </div>
 
         <div>
-          <label className="field-label" htmlFor="item-threshold">Reorder threshold</label>
+          <label className="field-label" htmlFor="item-threshold">Par level</label>
           <input
             id="item-threshold"
             className="text-input"
@@ -90,12 +89,11 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
             value={threshold}
             onChange={(e) => setThreshold(e.target.value)}
           />
+          <div className="field-hint">Goes on the reorder list at or below this</div>
         </div>
 
         <div>
-          <label className="field-label" htmlFor="item-expected">
-            Expected quantity (for discrepancy alerts, optional)
-          </label>
+          <label className="field-label" htmlFor="item-expected">Expected count</label>
           <input
             id="item-expected"
             className="text-input"
@@ -104,13 +102,15 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
             min="0"
             value={expected}
             onChange={(e) => setExpected(e.target.value)}
-            placeholder="Leave blank to skip checks"
+            placeholder="Optional"
           />
+          <div className="field-hint">Counts more than 30% off get flagged for review</div>
         </div>
 
         <div className="sheet-actions">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : isEdit ? 'Save' : 'Add Item'}
+            {saving && <span className="btn-spinner" />}
+            {saving ? 'Saving' : isEdit ? 'Save' : 'Add item'}
           </button>
           {isEdit && (
             <button
@@ -119,7 +119,7 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
               disabled={saving}
               onClick={() => onDelete && onDelete()}
             >
-              Delete Item
+              Delete item
             </button>
           )}
         </div>

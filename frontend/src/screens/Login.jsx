@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { api, setSession } from '../api.js'
-import { LogoMark } from '../components/Icons.jsx'
 
 export default function Login({ onLoggedIn, onStaffLogin }) {
   const [email, setEmail] = useState('')
@@ -29,13 +28,12 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
 
   return (
     <div className="login-screen">
-      <div className="login-hero rise" style={{ '--i': 0 }}>
-        <span className="logo-mark float-soft"><LogoMark size={72} /></span>
-        <div className="login-wordmark">Pantri</div>
-        <div className="login-subtitle">Smart inventory for restaurants</div>
+      <div className="login-wordmark">
+        Pantri<span className="dot">.</span>
       </div>
+      <div className="login-subtitle">Inventory for restaurants</div>
 
-      <form className="login-card rise" style={{ '--i': 2 }} onSubmit={handleSubmit}>
+      <form className="login-form" onSubmit={handleSubmit}>
         {error && <div className="error-text">{error}</div>}
 
         <div>
@@ -45,7 +43,6 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
             className="text-input"
             type="email"
             autoComplete="username"
-            placeholder="you@restaurant.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -59,7 +56,6 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
             className="text-input"
             type="password"
             autoComplete="current-password"
-            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -68,12 +64,12 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
 
         <button className="btn-primary" type="submit" disabled={loading}>
           {loading && <span className="btn-spinner" />}
-          {loading ? 'Signing in…' : 'Sign In'}
+          {loading ? 'Signing in' : 'Sign in'}
         </button>
       </form>
 
-      <button className="login-alt-link rise" style={{ '--i': 4 }} onClick={onStaffLogin}>
-        Staff member? Use PIN →
+      <button className="login-alt-link" onClick={onStaffLogin}>
+        Staff sign in
       </button>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { api, setSession } from '../api.js'
-import { LogoMark, BackspaceIcon, CheckIcon } from '../components/Icons.jsx'
+import { BackspaceIcon } from '../components/Icons.jsx'
 import Avatar from '../components/Avatar.jsx'
 import { buzz } from '../haptics.js'
 
@@ -24,9 +24,9 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
         name: result.user.full_name || '',
       })
       setWelcome(result.user.full_name || 'Welcome')
-      setTimeout(onLoggedIn, 1100)
+      setTimeout(onLoggedIn, 900)
     } catch (err) {
-      setError(err.message || 'Invalid PIN')
+      setError(err.message || 'Incorrect PIN')
       setPin('')
       setChecking(false)
       setShake(true)
@@ -54,9 +54,7 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
         <div className="pin-welcome">
           <Avatar name={welcome} />
           <div className="pin-welcome-name">Hi, {welcome.split(' ')[0]}</div>
-          <div className="pin-welcome-sub">
-            <CheckIcon size={16} strokeWidth={2.4} /> Signed in — loading your count
-          </div>
+          <div className="pin-welcome-sub">Opening today's count</div>
         </div>
       </div>
     )
@@ -64,11 +62,8 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
 
   return (
     <div className="pin-screen">
-      <div className="pin-head rise" style={{ '--i': 0 }}>
-        <span className="logo-mark float-soft"><LogoMark size={56} /></span>
-        <h1 className="pin-title">Staff Login</h1>
-        <div className="pin-label">Enter your 4-digit PIN</div>
-      </div>
+      <h1 className="pin-title">Staff sign in</h1>
+      <div className="pin-label">Enter your 4-digit PIN</div>
 
       <div className={`pin-dots ${shake ? 'shake' : ''}`}>
         {[0, 1, 2, 3].map((i) => (
@@ -78,10 +73,10 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
 
       <div className="pin-error">
         {error && <span className="error-text">{error}</span>}
-        {checking && <span className="spinner" style={{ width: 20, height: 20, display: 'inline-block' }} />}
+        {checking && <span className="spinner" style={{ width: 18, height: 18, display: 'inline-block' }} />}
       </div>
 
-      <div className="pin-pad rise" style={{ '--i': 2 }}>
+      <div className="pin-pad">
         {KEYS.map((key, i) =>
           key === null ? (
             <span key={i} />
@@ -92,14 +87,14 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
               onClick={() => press(key)}
               aria-label={key === 'back' ? 'Delete digit' : key}
             >
-              {key === 'back' ? <BackspaceIcon size={26} /> : key}
+              {key === 'back' ? <BackspaceIcon size={24} /> : key}
             </button>
           )
         )}
       </div>
 
-      <button className="login-alt-link rise" style={{ '--i': 4 }} onClick={onManagerLogin}>
-        Manager login →
+      <button className="login-alt-link" onClick={onManagerLogin}>
+        Manager sign in
       </button>
     </div>
   )

@@ -4,7 +4,7 @@ import { timeAgo } from '../constants.js'
 import Avatar from '../components/Avatar.jsx'
 import BottomSheet from '../components/BottomSheet.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
-import { PlusIcon, UsersIcon, TrashIcon, ChevronIcon } from '../components/Icons.jsx'
+import { PlusIcon, TrashIcon, ChevronIcon } from '../components/Icons.jsx'
 
 function AddStaffSheet({ onClose, onCreate }) {
   const [name, setName] = useState('')
@@ -19,7 +19,7 @@ function AddStaffSheet({ onClose, onCreate }) {
       return
     }
     if (!/^\d{4}$/.test(pin)) {
-      setError('PIN must be exactly 4 digits')
+      setError('PIN must be 4 digits')
       return
     }
     setSaving(true)
@@ -33,7 +33,7 @@ function AddStaffSheet({ onClose, onCreate }) {
   }
 
   return (
-    <BottomSheet title="Add Staff Member" onClose={onClose}>
+    <BottomSheet title="Add staff member" onClose={onClose}>
       <form className="sheet-form" onSubmit={handleSubmit}>
         {error && <div className="error-text">{error}</div>}
 
@@ -44,12 +44,11 @@ function AddStaffSheet({ onClose, onCreate }) {
             className="text-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Harpreet Singh"
           />
         </div>
 
         <div>
-          <label className="field-label" htmlFor="staff-pin">4-digit PIN</label>
+          <label className="field-label" htmlFor="staff-pin">PIN</label>
           <input
             id="staff-pin"
             className="text-input pin-input"
@@ -60,12 +59,13 @@ function AddStaffSheet({ onClose, onCreate }) {
             onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
             placeholder="0000"
           />
+          <div className="field-hint">They'll use this 4-digit PIN to sign in</div>
         </div>
 
         <div className="sheet-actions">
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving && <span className="btn-spinner" />}
-            {saving ? 'Creating…' : 'Create Account'}
+            {saving ? 'Creating' : 'Create account'}
           </button>
         </div>
       </form>
@@ -121,45 +121,39 @@ export default function Staff() {
       <header className="screen-header">
         <div>
           <h1 className="screen-title">Staff</h1>
-          <div className="screen-subtitle">
-            {employees ? `${employees.length} team member${employees.length === 1 ? '' : 's'}` : 'Loading…'}
-          </div>
+          {employees && (
+            <div className="screen-subtitle">
+              {employees.length} {employees.length === 1 ? 'person' : 'people'}
+            </div>
+          )}
         </div>
       </header>
 
       {error && <div className="banner-error">{error}</div>}
 
       {employees === null ? (
-        <SkeletonList rows={3} height={70} />
+        <SkeletonList rows={3} height={56} />
       ) : employees.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-check" style={{ background: 'var(--saffron-soft)', color: 'var(--saffron-deep)' }}>
-            <UsersIcon size={38} />
-          </div>
           <div className="empty-title">No staff yet</div>
           <div className="empty-subtitle">
-            Add a staff member so they can submit daily counts with a PIN.
+            Add someone so they can submit counts with a PIN.
           </div>
         </div>
       ) : (
-        <div className="card-list">
-          {employees.map((emp, i) => (
-            <button
-              className="staff-row rise"
-              style={{ '--i': i }}
-              key={emp.id}
-              onClick={() => setSelected(emp)}
-            >
+        <div className="list-group">
+          {employees.map((emp) => (
+            <button className="list-row" key={emp.id} onClick={() => setSelected(emp)}>
               <Avatar name={emp.full_name} />
-              <div className="activity-info">
-                <div className="activity-name">{emp.full_name}</div>
-                <div className="activity-time">
+              <div className="row-main">
+                <div className="row-title">{emp.full_name}</div>
+                <div className="row-sub">
                   {emp.last_active
-                    ? `Last active ${timeAgo(emp.last_active)}`
-                    : 'Never logged in'}
+                    ? `Last count ${timeAgo(emp.last_active)}`
+                    : 'Hasn’t signed in yet'}
                 </div>
               </div>
-              <span className="item-chevron"><ChevronIcon size={18} /></span>
+              <span className="row-chevron"><ChevronIcon size={17} /></span>
             </button>
           ))}
         </div>
@@ -167,7 +161,7 @@ export default function Staff() {
 
       <div className="staff-add-wrap">
         <button className="btn-secondary" onClick={() => setShowAdd(true)}>
-          <PlusIcon size={19} strokeWidth={2.2} /> Add Staff Member
+          <PlusIcon size={18} strokeWidth={2} /> Add staff member
         </button>
       </div>
 
@@ -178,22 +172,19 @@ export default function Staff() {
           <div className="account-sheet-head">
             <Avatar name={selected.full_name} />
             <div>
-              <div className="activity-name">{selected.full_name}</div>
-              <span className="account-role-badge">Employee</span>
+              <div className="account-name">{selected.full_name}</div>
+              <div className="account-role">
+                {selected.last_active
+                  ? `Last count ${timeAgo(selected.last_active)}`
+                  : 'Hasn’t signed in yet'}
+              </div>
             </div>
           </div>
-          <div className="sheet-form">
-            <div className="activity-time">
-              {selected.last_active
-                ? `Last active ${timeAgo(selected.last_active)}`
-                : 'Never logged in'}
-            </div>
-            <div className="sheet-actions">
-              <button className="btn-text-danger" onClick={handleDelete}>
-                <TrashIcon size={18} />
-                {confirmDelete ? 'Tap again to confirm removal' : 'Remove Staff Member'}
-              </button>
-            </div>
+          <div className="sheet-actions">
+            <button className="btn-text-danger" onClick={handleDelete}>
+              <TrashIcon size={17} />
+              {confirmDelete ? 'Tap again to confirm' : 'Remove'}
+            </button>
           </div>
         </BottomSheet>
       )}
