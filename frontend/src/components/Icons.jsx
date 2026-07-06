@@ -158,9 +158,9 @@ export function LogoMark({ size = 64 }) {
       <g stroke="#FFFFFF" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" fill="none">
         <path d="M17 34.5h30c0 9.2-6.4 15.5-15 15.5s-15-6.3-15-15.5z" />
         <path d="M13.5 34.5h37" />
-        <path d="M25.5 26.5c-2.4-2.6-.4-4.6 0-6.4" opacity="0.9" />
-        <path d="M32.5 25.8c-2.4-2.6-.4-5.4 0-7.3" opacity="0.9" />
-        <path d="M39.5 26.5c-2.4-2.6-.4-4.6 0-6.4" opacity="0.9" />
+        <path className="logo-steam" d="M25.5 26.5c-2.4-2.6-.4-4.6 0-6.4" />
+        <path className="logo-steam s2" d="M32.5 25.8c-2.4-2.6-.4-5.4 0-7.3" />
+        <path className="logo-steam s3" d="M39.5 26.5c-2.4-2.6-.4-4.6 0-6.4" />
       </g>
     </svg>
   )

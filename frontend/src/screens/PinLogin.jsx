@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api, setSession } from '../api.js'
 import { LogoMark, BackspaceIcon, CheckIcon } from '../components/Icons.jsx'
 import Avatar from '../components/Avatar.jsx'
+import { buzz } from '../haptics.js'
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', 'back']
 
@@ -35,6 +36,7 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
 
   const press = (key) => {
     if (checking) return
+    buzz(7)
     if (key === 'back') {
       setPin((p) => p.slice(0, -1))
       setError('')
@@ -62,8 +64,8 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
 
   return (
     <div className="pin-screen">
-      <div className="pin-head">
-        <span className="logo-mark"><LogoMark size={56} /></span>
+      <div className="pin-head rise" style={{ '--i': 0 }}>
+        <span className="logo-mark float-soft"><LogoMark size={56} /></span>
         <h1 className="pin-title">Staff Login</h1>
         <div className="pin-label">Enter your 4-digit PIN</div>
       </div>
@@ -79,7 +81,7 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
         {checking && <span className="spinner" style={{ width: 20, height: 20, display: 'inline-block' }} />}
       </div>
 
-      <div className="pin-pad">
+      <div className="pin-pad rise" style={{ '--i': 2 }}>
         {KEYS.map((key, i) =>
           key === null ? (
             <span key={i} />
@@ -96,7 +98,7 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
         )}
       </div>
 
-      <button className="login-alt-link" onClick={onManagerLogin}>
+      <button className="login-alt-link rise" style={{ '--i': 4 }} onClick={onManagerLogin}>
         Manager login →
       </button>
     </div>

@@ -124,36 +124,45 @@ export default function Inventory({ addSignal }) {
           </div>
         </div>
       ) : (
-        grouped.map((group) => (
-          <div key={group.category}>
-            <div className="category-title">{group.category}</div>
-            <div className="card-list">
-              {group.items.map((item) => {
-                const low = item.current_quantity <= item.reorder_threshold
-                const color = categoryColor(item.category)
-                return (
-                  <button
-                    key={item.id}
-                    className="item-card"
-                    onClick={() => setEditingItem(item)}
-                  >
-                    <span className="category-ring" style={{ '--ring-soft': tint(color) }}>
-                      <span className="category-dot" style={{ background: color }} />
-                    </span>
-                    <div className="item-info">
-                      <div className="item-name">{item.name}</div>
-                      <div className="item-unit">{item.unit}</div>
-                    </div>
-                    <span className={`qty-pill ${low ? 'low' : 'ok'}`}>
-                      {item.current_quantity} {item.unit}
-                    </span>
-                    <span className="item-chevron"><ChevronIcon size={18} /></span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        ))
+        (() => {
+          let runningIndex = 0
+          return grouped.map((group) => {
+            const groupStart = runningIndex
+            runningIndex += group.items.length
+            return (
+              <div key={group.category}>
+                <div className="category-title">{group.category}</div>
+                <div className="card-list">
+                  {group.items.map((item, i) => {
+                    const low = item.current_quantity <= item.reorder_threshold
+                    const color = categoryColor(item.category)
+                    return (
+                      <button
+                        key={item.id}
+                        className="item-card rise"
+                        style={{ '--i': groupStart + i }}
+                        onClick={() => setEditingItem(item)}
+                      >
+                        <span className="category-ring" style={{ '--ring-soft': tint(color) }}>
+                          <span className="category-dot" style={{ background: color }} />
+                        </span>
+                        <div className="item-info">
+                          <div className="item-name">{item.name}</div>
+                          <div className="item-unit">{item.unit}</div>
+                        </div>
+                        <span className={`qty-pill ${low ? 'low' : 'ok'}`}>
+                          {low && <span className="low-dot" />}
+                          {item.current_quantity} {item.unit}
+                        </span>
+                        <span className="item-chevron"><ChevronIcon size={18} /></span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })
+        })()
       )}
 
       <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add Item">
