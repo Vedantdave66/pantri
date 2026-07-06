@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import Toast from '../components/Toast.jsx'
+import { SkeletonList } from '../components/Skeleton.jsx'
+import { ShareIcon, AlertIcon, CheckIcon, ChevronIcon } from '../components/Icons.jsx'
 
 function buildShareText(items) {
   const date = new Date().toLocaleDateString('en-US', {
@@ -45,7 +47,7 @@ export default function Reorder({ onBack }) {
     }
     try {
       await navigator.clipboard.writeText(text)
-      setToast('Copied to clipboard ✓')
+      setToast('Copied to clipboard')
     } catch {
       setToast('Unable to copy')
     }
@@ -57,28 +59,33 @@ export default function Reorder({ onBack }) {
       <header className="screen-header">
         <div>
           {onBack && (
-            <button className="back-btn" onClick={onBack}>← Back</button>
+            <button className="back-btn" onClick={onBack}>
+              <ChevronIcon size={16} /> Back
+            </button>
           )}
           <h1 className="screen-title">Reorder</h1>
         </div>
         {items && items.length > 0 && (
-          <button className="header-action" onClick={handleShare}>Share</button>
+          <button className="header-action" onClick={handleShare}>
+            <ShareIcon size={17} /> Share
+          </button>
         )}
       </header>
 
       {error && <div className="banner-error">{error}</div>}
 
       {items === null ? (
-        <div className="loading-wrap"><div className="spinner" /></div>
+        <SkeletonList rows={3} height={82} />
       ) : items.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-check">✓</div>
+          <div className="empty-check"><CheckIcon size={40} strokeWidth={2.2} /></div>
           <div className="empty-title">You're fully stocked</div>
           <div className="empty-subtitle">Check back after next count</div>
         </div>
       ) : (
         <>
           <div className="reorder-banner">
+            <AlertIcon size={19} />
             {items.length} item{items.length === 1 ? '' : 's'} need restocking
           </div>
           <div className="card-list">
@@ -86,11 +93,13 @@ export default function Reorder({ onBack }) {
               const short = Math.max(0, item.reorder_threshold - item.current_quantity)
               return (
                 <div className="reorder-card" key={item.id}>
-                  <div className="item-name">{item.name}</div>
-                  <div className="reorder-detail">
-                    {item.current_quantity} on hand · reorder at {item.reorder_threshold} {item.unit}
+                  <div className="reorder-body">
+                    <div className="item-name">{item.name}</div>
+                    <div className="reorder-detail">
+                      {item.current_quantity} on hand · reorder at {item.reorder_threshold} {item.unit}
+                    </div>
                   </div>
-                  <div className="reorder-short">Short by {short} {item.unit}</div>
+                  <span className="short-pill">Short {short} {item.unit}</span>
                 </div>
               )
             })}

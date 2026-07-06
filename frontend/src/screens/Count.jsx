@@ -1,15 +1,64 @@
 import { useEffect, useMemo, useState } from 'react'
-import { api } from '../api.js'
+import { api, clearSession } from '../api.js'
 import { groupByCategory, formatToday, timeAgo } from '../constants.js'
 import Avatar from '../components/Avatar.jsx'
 import Toast from '../components/Toast.jsx'
+import { SkeletonList } from '../components/Skeleton.jsx'
+import {
+  PlusIcon,
+  MinusIcon,
+  CheckIcon,
+  NoteIcon,
+  LogoutIcon,
+} from '../components/Icons.jsx'
 
-function CountRow({ item, value, onAdjust, onSet, lastCount }) {
+const CONFETTI_COLORS = ['#F4A535', '#E76F51', '#2D6A4F', '#C1121F', '#F7B750', '#3B8765']
+
+function Confetti() {
   return (
-    <div className="count-card">
-      <div>
-        <div className="count-item-name">{item.name}</div>
-        <div className="count-item-unit">{item.unit}</div>
+    <>
+      {CONFETTI_COLORS.map((color, i) => (
+        <span
+          key={i}
+          className="confetti"
+          style={{
+            left: `${12 + i * 14}%`,
+            background: color,
+            animationDelay: `${i * 0.12}s`,
+          }}
+        />
+      ))}
+    </>
+  )
+}
+
+function SuccessScreen({ title, subtitle, onLogout }) {
+  return (
+    <div className="success-screen">
+      <Confetti />
+      <div className="success-check"><CheckIcon size={52} strokeWidth={2.4} /></div>
+      <h1 className="success-title">{title}</h1>
+      <div className="success-subtitle">{subtitle}</div>
+      {onLogout && (
+        <button className="success-logout" onClick={onLogout}>
+          <LogoutIcon size={17} /> Log out
+        </button>
+      )}
+    </div>
+  )
+}
+
+function CountRow({ item, value, touched, onAdjust, onSet, lastCount }) {
+  return (
+    <div className={`count-card ${touched ? 'touched' : ''}`}>
+      <div className="count-card-top">
+        <div>
+          <div className="count-item-name">{item.name}</div>
+          <div className="count-item-unit">{item.unit}</div>
+        </div>
+        {touched && (
+          <span className="counted-tick"><CheckIcon size={15} strokeWidth={2.6} /></span>
+        )}
       </div>
       <div className="count-controls">
         <button
@@ -17,7 +66,7 @@ function CountRow({ item, value, onAdjust, onSet, lastCount }) {
           onClick={() => onAdjust(item.id, -1)}
           aria-label={`Decrease ${item.name}`}
         >
-          −
+          <MinusIcon size={26} strokeWidth={2.2} />
         </button>
         <input
           className="count-value"
@@ -32,14 +81,14 @@ function CountRow({ item, value, onAdjust, onSet, lastCount }) {
           onClick={() => onAdjust(item.id, 1)}
           aria-label={`Increase ${item.name}`}
         >
-          +
+          <PlusIcon size={26} strokeWidth={2.2} />
         </button>
       </div>
       {lastCount && (
         <div className="count-last-by">
           <Avatar name={lastCount.employee_name} />
           <span>
-            Last counted by {lastCount.employee_name || 'owner'}, {timeAgo(lastCount.counted_at)}
+            Last counted by {lastCount.employee_name || 'owner'} · {timeAgo(lastCount.counted_at)}
           </span>
         </div>
       )}
@@ -113,6 +162,11 @@ export default function Count({ role, userName }) {
     setTouched((prev) => ({ ...prev, [id]: true }))
   }
 
+  const touchedCount = useMemo(
+    () => (items ? items.filter((i) => touched[i.id]).length : 0),
+    [items, touched]
+  )
+
   const changedEntries = useMemo(() => {
     if (!items) return []
     if (isEmployee) {
@@ -124,6 +178,11 @@ export default function Count({ role, userName }) {
       .filter((item) => counts[item.id] !== item.current_quantity)
       .map((item) => ({ item_id: item.id, new_quantity: counts[item.id] }))
   }, [items, counts, touched, isEmployee])
+
+  const handleLogout = () => {
+    clearSession()
+    window.location.reload()
+  }
 
   const handleSubmit = async () => {
     if (changedEntries.length === 0) return
@@ -137,7 +196,8 @@ export default function Count({ role, userName }) {
         setItems((prev) =>
           prev.map((item) => ({ ...item, current_quantity: counts[item.id] }))
         )
-        setToast('Count saved ✓')
+        setTouched({})
+        setToast('Count saved')
         setTimeout(() => setToast(''), 2000)
       }
     } catch (err) {
@@ -153,21 +213,21 @@ export default function Count({ role, userName }) {
 
   if (submitted) {
     return (
-      <div className="success-screen">
-        <div className="success-check">✓</div>
-        <h1 className="success-title">Count submitted ✓</h1>
-        <div className="success-subtitle">Your manager has been notified</div>
-      </div>
+      <SuccessScreen
+        title="Count submitted"
+        subtitle="Your manager has been notified"
+        onLogout={isEmployee ? handleLogout : null}
+      />
     )
   }
 
   if (alreadyDone) {
     return (
-      <div className="success-screen">
-        <div className="success-check">✓</div>
-        <h1 className="success-title">Already submitted today</h1>
-        <div className="success-subtitle">Come back tomorrow for the next count</div>
-      </div>
+      <SuccessScreen
+        title="Already submitted today"
+        subtitle="Come back tomorrow for the next count"
+        onLogout={isEmployee ? handleLogout : null}
+      />
     )
   }
 
@@ -175,17 +235,31 @@ export default function Count({ role, userName }) {
     <div className="screen">
       <header className="screen-header">
         <div>
+          <div className="header-eyebrow">{formatToday()}</div>
           <h1 className="screen-title">{isEmployee ? 'Count' : 'Daily Count'}</h1>
-          <div className="screen-subtitle">
-            {userName ? `${userName} · ` : ''}{formatToday()}
-          </div>
+          {userName && <div className="screen-subtitle">{userName}</div>}
         </div>
       </header>
+
+      {isEmployee && items && items.length > 0 && (
+        <div className="count-progress-wrap">
+          <div className="count-progress-label">
+            <span>Counting progress</span>
+            <strong>{touchedCount} of {items.length}</strong>
+          </div>
+          <div className="count-progress-track">
+            <div
+              className="count-progress-fill"
+              style={{ width: `${(touchedCount / items.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {error && <div className="banner-error">{error}</div>}
 
       {items === null ? (
-        <div className="loading-wrap"><div className="spinner" /></div>
+        <SkeletonList rows={4} height={150} />
       ) : isEmployee ? (
         <>
           <div className="card-list">
@@ -194,15 +268,19 @@ export default function Count({ role, userName }) {
                 key={item.id}
                 item={item}
                 value={counts[item.id] ?? 0}
+                touched={Boolean(touched[item.id])}
                 onAdjust={adjust}
                 onSet={setCount}
               />
             ))}
           </div>
           <div className="notes-wrap">
+            <div className="notes-label">
+              <NoteIcon size={17} /> Note for the owner
+            </div>
             <textarea
               className="notes-input"
-              placeholder="Any notes for the owner?"
+              placeholder="Anything worth flagging? (optional)"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
@@ -218,6 +296,7 @@ export default function Count({ role, userName }) {
                   key={item.id}
                   item={item}
                   value={counts[item.id] ?? 0}
+                  touched={Boolean(touched[item.id])}
                   onAdjust={adjust}
                   onSet={setCount}
                   lastCount={latest[item.id]}
@@ -236,11 +315,14 @@ export default function Count({ role, userName }) {
               onClick={handleSubmit}
               disabled={saving || changedEntries.length === 0}
             >
+              {saving && <span className="btn-spinner" />}
               {saving
                 ? 'Submitting…'
                 : isEmployee
                   ? `Submit ${changedEntries.length} count${changedEntries.length === 1 ? '' : 's'}`
-                  : 'Save Count'}
+                  : changedEntries.length > 0
+                    ? `Save Count · ${changedEntries.length} change${changedEntries.length === 1 ? '' : 's'}`
+                    : 'Save Count'}
             </button>
           </div>
         </div>

@@ -2,6 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api.js'
 import { CATEGORIES, groupByCategory, categoryColor } from '../constants.js'
 import ItemFormSheet from '../components/ItemFormSheet.jsx'
+import { SkeletonList } from '../components/Skeleton.jsx'
+import { SearchIcon, ChevronIcon, PlusIcon, BoxIcon } from '../components/Icons.jsx'
+
+function tint(hex) {
+  return `color-mix(in srgb, ${hex} 13%, white)`
+}
 
 export default function Inventory({ addSignal }) {
   const [items, setItems] = useState(null)
@@ -14,8 +20,7 @@ export default function Inventory({ addSignal }) {
   const load = async () => {
     setError('')
     try {
-      const data = await api.listItems()
-      setItems(data)
+      setItems(await api.listItems())
     } catch (err) {
       setError(err.message)
     }
@@ -28,6 +33,14 @@ export default function Inventory({ addSignal }) {
   useEffect(() => {
     if (addSignal) setShowAdd(true)
   }, [addSignal])
+
+  const counts = useMemo(() => {
+    const map = { All: items?.length || 0 }
+    for (const c of CATEGORIES) {
+      map[c] = items ? items.filter((i) => i.category === c).length : 0
+    }
+    return map
+  }, [items])
 
   const filtered = useMemo(() => {
     if (!items) return []
@@ -65,6 +78,9 @@ export default function Inventory({ addSignal }) {
       <header className="screen-header">
         <div>
           <h1 className="screen-title">Inventory</h1>
+          <div className="screen-subtitle">
+            {items ? `${items.length} items tracked` : 'Loading…'}
+          </div>
         </div>
       </header>
 
@@ -75,6 +91,7 @@ export default function Inventory({ addSignal }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <span className="search-icon"><SearchIcon size={19} /></span>
       </div>
 
       <div className="chips-row">
@@ -85,6 +102,7 @@ export default function Inventory({ addSignal }) {
             onClick={() => setFilter(c)}
           >
             {c}
+            {counts[c] > 0 && <span className="chip-count">{counts[c]}</span>}
           </button>
         ))}
       </div>
@@ -92,11 +110,18 @@ export default function Inventory({ addSignal }) {
       {error && <div className="banner-error">{error}</div>}
 
       {items === null ? (
-        <div className="loading-wrap"><div className="spinner" /></div>
+        <SkeletonList rows={5} height={74} />
       ) : grouped.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-title">No items found</div>
-          <div className="empty-subtitle">Tap + to add your first inventory item.</div>
+          <div className="empty-check" style={{ background: 'var(--saffron-soft)', color: 'var(--saffron-deep)' }}>
+            <BoxIcon size={38} />
+          </div>
+          <div className="empty-title">Nothing here</div>
+          <div className="empty-subtitle">
+            {query || filter !== 'All'
+              ? 'Try a different search or filter.'
+              : 'Tap + to add your first inventory item.'}
+          </div>
         </div>
       ) : (
         grouped.map((group) => (
@@ -105,16 +130,16 @@ export default function Inventory({ addSignal }) {
             <div className="card-list">
               {group.items.map((item) => {
                 const low = item.current_quantity <= item.reorder_threshold
+                const color = categoryColor(item.category)
                 return (
                   <button
                     key={item.id}
                     className="item-card"
                     onClick={() => setEditingItem(item)}
                   >
-                    <span
-                      className="category-dot"
-                      style={{ background: categoryColor(item.category) }}
-                    />
+                    <span className="category-ring" style={{ '--ring-soft': tint(color) }}>
+                      <span className="category-dot" style={{ background: color }} />
+                    </span>
                     <div className="item-info">
                       <div className="item-name">{item.name}</div>
                       <div className="item-unit">{item.unit}</div>
@@ -122,6 +147,7 @@ export default function Inventory({ addSignal }) {
                     <span className={`qty-pill ${low ? 'low' : 'ok'}`}>
                       {item.current_quantity} {item.unit}
                     </span>
+                    <span className="item-chevron"><ChevronIcon size={18} /></span>
                   </button>
                 )
               })}
@@ -130,7 +156,9 @@ export default function Inventory({ addSignal }) {
         ))
       )}
 
-      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add Item">+</button>
+      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add Item">
+        <PlusIcon size={26} strokeWidth={2.2} />
+      </button>
 
       {showAdd && (
         <ItemFormSheet onClose={() => setShowAdd(false)} onSave={handleAdd} />

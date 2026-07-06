@@ -70,6 +70,7 @@ export default function App() {
         <Dashboard
           ownerName={session.name}
           onOpenReorder={() => setShowReorder(true)}
+          onOpenCount={() => setTab('count')}
           onAddItem={openAddItem}
         />
       )}
