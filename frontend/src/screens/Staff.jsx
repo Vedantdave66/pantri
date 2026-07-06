@@ -143,8 +143,13 @@ export default function Staff() {
         </div>
       ) : (
         <div className="card-list">
-          {employees.map((emp) => (
-            <button className="staff-row" key={emp.id} onClick={() => setSelected(emp)}>
+          {employees.map((emp, i) => (
+            <button
+              className="staff-row rise"
+              style={{ '--i': i }}
+              key={emp.id}
+              onClick={() => setSelected(emp)}
+            >
               <Avatar name={emp.full_name} />
               <div className="activity-info">
                 <div className="activity-name">{emp.full_name}</div>

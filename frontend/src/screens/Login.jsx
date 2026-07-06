@@ -29,13 +29,13 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
 
   return (
     <div className="login-screen">
-      <div className="login-hero">
-        <span className="logo-mark"><LogoMark size={72} /></span>
+      <div className="login-hero rise" style={{ '--i': 0 }}>
+        <span className="logo-mark float-soft"><LogoMark size={72} /></span>
         <div className="login-wordmark">Pantri</div>
         <div className="login-subtitle">Smart inventory for restaurants</div>
       </div>
 
-      <form className="login-card" onSubmit={handleSubmit}>
+      <form className="login-card rise" style={{ '--i': 2 }} onSubmit={handleSubmit}>
         {error && <div className="error-text">{error}</div>}
 
         <div>
@@ -72,7 +72,7 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
         </button>
       </form>
 
-      <button className="login-alt-link" onClick={onStaffLogin}>
+      <button className="login-alt-link rise" style={{ '--i': 4 }} onClick={onStaffLogin}>
         Staff member? Use PIN →
       </button>
     </div>

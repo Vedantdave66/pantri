@@ -4,6 +4,7 @@ import { formatToday, greeting, formatTime } from '../constants.js'
 import Avatar from '../components/Avatar.jsx'
 import BottomSheet from '../components/BottomSheet.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
+import AnimatedNumber from '../components/AnimatedNumber.jsx'
 import {
   BoxIcon,
   BellIcon,
@@ -66,7 +67,8 @@ export default function Dashboard({ ownerName, onOpenReorder, onOpenCount, onAdd
         <div>
           <div className="header-eyebrow">{formatToday()}</div>
           <h1 className="screen-title">
-            {greeting()}{firstName ? `, ${firstName}` : ''} 👋
+            {greeting().replace(' 👋', '')}{firstName ? `, ${firstName}` : ''}{' '}
+            <span className="wave">👋</span>
           </h1>
         </div>
         <button className="header-avatar-btn" onClick={() => setShowAccount(true)} aria-label="Account">
@@ -90,28 +92,28 @@ export default function Dashboard({ ownerName, onOpenReorder, onOpenCount, onAdd
         <>
           <div className="summary-row">
             <button
-              className="summary-card"
-              style={{ '--accent': 'var(--forest)', '--accent-soft': 'var(--forest-soft)' }}
+              className="summary-card rise"
+              style={{ '--i': 0, '--accent': 'var(--forest)', '--accent-soft': 'var(--forest-soft)' }}
             >
               <span className="summary-icon"><BoxIcon size={20} /></span>
-              <div className="summary-value">{items.length}</div>
+              <div className="summary-value"><AnimatedNumber value={items.length} /></div>
               <div className="summary-label">Total Items</div>
             </button>
             <button
-              className="summary-card"
+              className="summary-card rise"
               onClick={onOpenReorder}
-              style={{ '--accent': 'var(--ember)', '--accent-soft': 'var(--ember-soft)' }}
+              style={{ '--i': 1, '--accent': 'var(--ember)', '--accent-soft': 'var(--ember-soft)' }}
             >
               <span className="summary-icon"><BellIcon size={20} /></span>
               <div className="summary-value" style={reorderCount ? { color: 'var(--ember)' } : undefined}>
-                {reorderCount}
+                <AnimatedNumber value={reorderCount} />
               </div>
               <div className="summary-label">Need Reorder</div>
             </button>
             <button
-              className="summary-card"
+              className="summary-card rise"
               onClick={onOpenCount}
-              style={{ '--accent': 'var(--saffron)', '--accent-soft': 'var(--saffron-soft)' }}
+              style={{ '--i': 2, '--accent': 'var(--saffron)', '--accent-soft': 'var(--saffron-soft)' }}
             >
               <span className="summary-icon"><ClipboardIcon size={20} /></span>
               <div className="summary-value">{countedToday ? 'Yes' : 'No'}</div>
@@ -119,7 +121,7 @@ export default function Dashboard({ ownerName, onOpenReorder, onOpenCount, onAdd
             </button>
           </div>
 
-          <div className="quick-actions">
+          <div className="quick-actions rise" style={{ '--i': 3 }}>
             <button className="quick-action" onClick={onOpenCount}>
               <ClipboardIcon size={19} /> Start Count
             </button>
@@ -128,16 +130,20 @@ export default function Dashboard({ ownerName, onOpenReorder, onOpenCount, onAdd
             </button>
           </div>
 
-          <h2 className="section-title">Today's Activity</h2>
+          <h2 className="section-title rise" style={{ '--i': 4 }}>Today's Activity</h2>
           <div className="card-list">
             {today.submissions.length === 0 ? (
-              <div className="empty-inline">
-                <ClockIcon size={22} />
+              <div className="empty-inline rise" style={{ '--i': 5 }}>
+                <span className="swing"><ClockIcon size={22} /></span>
                 <span>No counts submitted today</span>
               </div>
             ) : (
-              today.submissions.map((sub) => (
-                <div className="activity-row" key={sub.employee_id || sub.employee_name}>
+              today.submissions.map((sub, i) => (
+                <div
+                  className="activity-row rise"
+                  style={{ '--i': 5 + i }}
+                  key={sub.employee_id || sub.employee_name}
+                >
                   <Avatar name={sub.employee_name} />
                   <div className="activity-info">
                     <div className="activity-name">{sub.employee_name}</div>
@@ -152,12 +158,12 @@ export default function Dashboard({ ownerName, onOpenReorder, onOpenCount, onAdd
 
           {discrepancies.length > 0 && (
             <>
-              <h2 className="section-title danger">
+              <h2 className="section-title danger rise" style={{ '--i': 6 }}>
                 <AlertIcon size={19} /> Discrepancies
               </h2>
               <div className="card-list">
-                {discrepancies.map((d) => (
-                  <div className="discrepancy-row" key={d.item_id}>
+                {discrepancies.map((d, i) => (
+                  <div className="discrepancy-row rise" style={{ '--i': 7 + i }} key={d.item_id}>
                     <span className="discrepancy-icon"><AlertIcon size={19} /></span>
                     <div className="discrepancy-body">
                       <div className="discrepancy-name">

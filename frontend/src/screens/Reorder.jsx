@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../api.js'
 import Toast from '../components/Toast.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
-import { ShareIcon, AlertIcon, CheckIcon, ChevronIcon } from '../components/Icons.jsx'
+import { ShareIcon, AlertIcon, CheckIcon, ChevronIcon, SparkleIcon } from '../components/Icons.jsx'
 
 function buildShareText(items) {
   const date = new Date().toLocaleDateString('en-US', {
@@ -79,20 +79,25 @@ export default function Reorder({ onBack }) {
       ) : items.length === 0 ? (
         <div className="empty-state">
           <div className="empty-check"><CheckIcon size={40} strokeWidth={2.2} /></div>
-          <div className="empty-title">You're fully stocked</div>
+          <div className="empty-title">
+            You're fully stocked{' '}
+            <span className="twinkle" style={{ display: 'inline-block', color: 'var(--saffron)' }}>
+              <SparkleIcon size={19} />
+            </span>
+          </div>
           <div className="empty-subtitle">Check back after next count</div>
         </div>
       ) : (
         <>
-          <div className="reorder-banner">
+          <div className="reorder-banner rise" style={{ '--i': 0 }}>
             <AlertIcon size={19} />
             {items.length} item{items.length === 1 ? '' : 's'} need restocking
           </div>
           <div className="card-list">
-            {items.map((item) => {
+            {items.map((item, i) => {
               const short = Math.max(0, item.reorder_threshold - item.current_quantity)
               return (
-                <div className="reorder-card" key={item.id}>
+                <div className="reorder-card rise" style={{ '--i': i + 1 }} key={item.id}>
                   <div className="reorder-body">
                     <div className="item-name">{item.name}</div>
                     <div className="reorder-detail">

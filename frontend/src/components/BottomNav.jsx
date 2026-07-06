@@ -1,4 +1,5 @@
 import { HomeIcon, BoxIcon, ClipboardIcon, UsersIcon } from './Icons.jsx'
+import { buzz } from '../haptics.js'
 
 const OWNER_TABS = [
   { key: 'home', label: 'Home', Icon: HomeIcon },
@@ -13,14 +14,23 @@ export default function BottomNav({ role, active, onChange }) {
       ? [{ key: 'count', label: 'Count', Icon: ClipboardIcon }]
       : OWNER_TABS
 
+  const activeIdx = Math.max(0, tabs.findIndex((t) => t.key === active))
+
   return (
     <nav className="tab-bar">
-      <div className="tab-bar-inner">
+      <div className="tab-bar-inner" style={{ '--tabs': tabs.length }}>
+        <span
+          className="tab-indicator"
+          style={{ transform: `translateX(${activeIdx * 100}%)` }}
+        />
         {tabs.map(({ key, label, Icon }) => (
           <button
             key={key}
             className={`tab-btn ${active === key ? 'active' : ''}`}
-            onClick={() => onChange(key)}
+            onClick={() => {
+              if (key !== active) buzz(6)
+              onChange(key)
+            }}
             aria-label={label}
           >
             <Icon size={23} strokeWidth={active === key ? 2 : 1.8} />

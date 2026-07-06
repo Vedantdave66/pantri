@@ -4,6 +4,7 @@ import { groupByCategory, formatToday, timeAgo } from '../constants.js'
 import Avatar from '../components/Avatar.jsx'
 import Toast from '../components/Toast.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
+import { buzz } from '../haptics.js'
 import {
   PlusIcon,
   MinusIcon,
@@ -12,19 +13,37 @@ import {
   LogoutIcon,
 } from '../components/Icons.jsx'
 
-const CONFETTI_COLORS = ['#F4A535', '#E76F51', '#2D6A4F', '#C1121F', '#F7B750', '#3B8765']
+const CONFETTI = [
+  { left: '8%', color: '#F4A535', size: 10, dx: 30, rot: 620, delay: 0, dur: 2.4, round: false },
+  { left: '18%', color: '#2D6A4F', size: 8, dx: -26, rot: 480, delay: 0.15, dur: 2.7, round: true },
+  { left: '28%', color: '#E76F51', size: 11, dx: 20, rot: 700, delay: 0.05, dur: 2.5, round: false },
+  { left: '38%', color: '#C1121F', size: 7, dx: -34, rot: 520, delay: 0.25, dur: 2.9, round: true },
+  { left: '48%', color: '#F7B750', size: 12, dx: 24, rot: 640, delay: 0.1, dur: 2.3, round: false },
+  { left: '58%', color: '#3B8765', size: 8, dx: -18, rot: 560, delay: 0.3, dur: 2.6, round: false },
+  { left: '68%', color: '#F4A535', size: 9, dx: 36, rot: 480, delay: 0.2, dur: 2.8, round: true },
+  { left: '78%', color: '#E76F51', size: 10, dx: -28, rot: 600, delay: 0.08, dur: 2.4, round: false },
+  { left: '88%', color: '#2D6A4F', size: 8, dx: 18, rot: 540, delay: 0.35, dur: 2.7, round: true },
+  { left: '33%', color: '#F7B750', size: 7, dx: -40, rot: 660, delay: 0.45, dur: 3.0, round: false },
+  { left: '63%', color: '#C1121F', size: 9, dx: 30, rot: 500, delay: 0.4, dur: 2.9, round: false },
+  { left: '93%', color: '#F4A535', size: 8, dx: -22, rot: 580, delay: 0.5, dur: 3.1, round: true },
+]
 
 function Confetti() {
   return (
     <>
-      {CONFETTI_COLORS.map((color, i) => (
+      {CONFETTI.map((c, i) => (
         <span
           key={i}
           className="confetti"
           style={{
-            left: `${12 + i * 14}%`,
-            background: color,
-            animationDelay: `${i * 0.12}s`,
+            left: c.left,
+            background: c.color,
+            '--size': `${c.size}px`,
+            '--dx': `${c.dx}px`,
+            '--rot': `${c.rot}deg`,
+            '--delay': `${c.delay}s`,
+            '--dur': `${c.dur}s`,
+            '--shape': c.round ? '50%' : '2px',
           }}
         />
       ))}
@@ -36,7 +55,12 @@ function SuccessScreen({ title, subtitle, onLogout }) {
   return (
     <div className="success-screen">
       <Confetti />
-      <div className="success-check"><CheckIcon size={52} strokeWidth={2.4} /></div>
+      <div className="success-svg-wrap">
+        <svg className="success-svg" viewBox="0 0 104 104">
+          <circle className="success-ring" cx="52" cy="52" r="46" />
+          <path className="success-tick" d="M33 54.5 47.5 69 72 39" />
+        </svg>
+      </div>
       <h1 className="success-title">{title}</h1>
       <div className="success-subtitle">{subtitle}</div>
       {onLogout && (
@@ -48,9 +72,18 @@ function SuccessScreen({ title, subtitle, onLogout }) {
   )
 }
 
-function CountRow({ item, value, touched, onAdjust, onSet, lastCount }) {
+function CountRow({ item, value, touched, onAdjust, onSet, lastCount, index }) {
+  const [bump, setBump] = useState(false)
+
+  const handleAdjust = (delta) => {
+    buzz(7)
+    setBump(false)
+    requestAnimationFrame(() => setBump(true))
+    onAdjust(item.id, delta)
+  }
+
   return (
-    <div className={`count-card ${touched ? 'touched' : ''}`}>
+    <div className={`count-card rise ${touched ? 'touched' : ''}`} style={{ '--i': index }}>
       <div className="count-card-top">
         <div>
           <div className="count-item-name">{item.name}</div>
@@ -63,22 +96,23 @@ function CountRow({ item, value, touched, onAdjust, onSet, lastCount }) {
       <div className="count-controls">
         <button
           className="count-btn minus"
-          onClick={() => onAdjust(item.id, -1)}
+          onClick={() => handleAdjust(-1)}
           aria-label={`Decrease ${item.name}`}
         >
           <MinusIcon size={26} strokeWidth={2.2} />
         </button>
         <input
-          className="count-value"
+          className={`count-value ${bump ? 'bump' : ''}`}
           type="number"
           inputMode="decimal"
           min="0"
           value={value}
           onChange={(e) => onSet(item.id, e.target.value)}
+          onAnimationEnd={() => setBump(false)}
         />
         <button
           className="count-btn plus"
-          onClick={() => onAdjust(item.id, 1)}
+          onClick={() => handleAdjust(1)}
           aria-label={`Increase ${item.name}`}
         >
           <PlusIcon size={26} strokeWidth={2.2} />
@@ -190,6 +224,7 @@ export default function Count({ role, userName }) {
     setError('')
     try {
       await api.submitCounts(changedEntries, isEmployee ? notes.trim() : null)
+      buzz(20)
       if (isEmployee) {
         setSubmitted(true)
       } else {
@@ -231,6 +266,8 @@ export default function Count({ role, userName }) {
     )
   }
 
+  let runningIndex = 0
+
   return (
     <div className="screen">
       <header className="screen-header">
@@ -263,9 +300,10 @@ export default function Count({ role, userName }) {
       ) : isEmployee ? (
         <>
           <div className="card-list">
-            {items.map((item) => (
+            {items.map((item, i) => (
               <CountRow
                 key={item.id}
+                index={i}
                 item={item}
                 value={counts[item.id] ?? 0}
                 touched={Boolean(touched[item.id])}
@@ -274,7 +312,7 @@ export default function Count({ role, userName }) {
               />
             ))}
           </div>
-          <div className="notes-wrap">
+          <div className="notes-wrap rise" style={{ '--i': Math.min(items.length, 10) }}>
             <div className="notes-label">
               <NoteIcon size={17} /> Note for the owner
             </div>
@@ -287,24 +325,29 @@ export default function Count({ role, userName }) {
           </div>
         </>
       ) : (
-        grouped.map((group) => (
-          <div key={group.category}>
-            <div className="category-title">{group.category}</div>
-            <div className="card-list">
-              {group.items.map((item) => (
-                <CountRow
-                  key={item.id}
-                  item={item}
-                  value={counts[item.id] ?? 0}
-                  touched={Boolean(touched[item.id])}
-                  onAdjust={adjust}
-                  onSet={setCount}
-                  lastCount={latest[item.id]}
-                />
-              ))}
+        grouped.map((group) => {
+          const groupStart = runningIndex
+          runningIndex += group.items.length
+          return (
+            <div key={group.category}>
+              <div className="category-title">{group.category}</div>
+              <div className="card-list">
+                {group.items.map((item, i) => (
+                  <CountRow
+                    key={item.id}
+                    index={groupStart + i}
+                    item={item}
+                    value={counts[item.id] ?? 0}
+                    touched={Boolean(touched[item.id])}
+                    onAdjust={adjust}
+                    onSet={setCount}
+                    lastCount={latest[item.id]}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))
+          )
+        })
       )}
 
       {items !== null && items.length > 0 && (
