@@ -1,9 +1,9 @@
 {
   "name": "Pantri",
   "short_name": "Pantri",
-  "description": "Inventory tracking for independent restaurants",
-  "theme_color": "#2D6A4F",
-  "background_color": "#FFFFFF",
+  "description": "Smart inventory for restaurants",
+  "theme_color": "#F4A535",
+  "background_color": "#FFFBF5",
   "display": "standalone",
   "start_url": "/",
   "scope": "/",

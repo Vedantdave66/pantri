@@ -1,26 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api.js'
-import { groupByCategory, formatToday } from '../constants.js'
+import { CATEGORIES, groupByCategory, categoryColor } from '../constants.js'
 import ItemFormSheet from '../components/ItemFormSheet.jsx'
 
-export default function Inventory() {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function Inventory({ addSignal }) {
+  const [items, setItems] = useState(null)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState('All')
   const [showAdd, setShowAdd] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
 
   const load = async () => {
-    setLoading(true)
     setError('')
     try {
       const data = await api.listItems()
       setItems(data)
     } catch (err) {
       setError(err.message)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -28,11 +25,20 @@ export default function Inventory() {
     load()
   }, [])
 
+  useEffect(() => {
+    if (addSignal) setShowAdd(true)
+  }, [addSignal])
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return items
-    const q = query.trim().toLowerCase()
-    return items.filter((i) => i.name.toLowerCase().includes(q))
-  }, [items, query])
+    if (!items) return []
+    let list = items
+    if (filter !== 'All') list = list.filter((i) => i.category === filter)
+    if (query.trim()) {
+      const q = query.trim().toLowerCase()
+      list = list.filter((i) => i.name.toLowerCase().includes(q))
+    }
+    return list
+  }, [items, query, filter])
 
   const grouped = useMemo(() => groupByCategory(filtered), [filtered])
 
@@ -58,8 +64,7 @@ export default function Inventory() {
     <div className="screen">
       <header className="screen-header">
         <div>
-          <h1 className="screen-title">Pantri</h1>
-          <div className="screen-date">{formatToday()}</div>
+          <h1 className="screen-title">Inventory</h1>
         </div>
       </header>
 
@@ -72,39 +77,51 @@ export default function Inventory() {
         />
       </div>
 
+      <div className="chips-row">
+        {['All', ...CATEGORIES].map((c) => (
+          <button
+            key={c}
+            className={`chip ${filter === c ? 'active' : ''}`}
+            onClick={() => setFilter(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+
       {error && <div className="banner-error">{error}</div>}
 
-      {loading ? (
-        <div className="loading-wrap">Loading…</div>
+      {items === null ? (
+        <div className="loading-wrap"><div className="spinner" /></div>
       ) : grouped.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">No items yet</div>
-          <div>Tap + to add your first inventory item.</div>
+          <div className="empty-title">No items found</div>
+          <div className="empty-subtitle">Tap + to add your first inventory item.</div>
         </div>
       ) : (
         grouped.map((group) => (
-          <div className="category-group" key={group.category}>
+          <div key={group.category}>
             <div className="category-title">{group.category}</div>
-            <div className="item-list">
+            <div className="card-list">
               {group.items.map((item) => {
                 const low = item.current_quantity <= item.reorder_threshold
                 return (
                   <button
                     key={item.id}
-                    className="item-row"
+                    className="item-card"
                     onClick={() => setEditingItem(item)}
                   >
-                    <div className="item-row-main">
-                      <span className={`status-dot ${low ? 'low' : ''}`} />
-                      <div className="item-info">
-                        <div className="item-name">{item.name}</div>
-                        <div className="item-qty">
-                          {item.current_quantity} {item.unit}
-                        </div>
-                      </div>
+                    <span
+                      className="category-dot"
+                      style={{ background: categoryColor(item.category) }}
+                    />
+                    <div className="item-info">
+                      <div className="item-name">{item.name}</div>
+                      <div className="item-unit">{item.unit}</div>
                     </div>
-                    {low && <span className="low-badge">LOW</span>}
-                    <span className="chevron">›</span>
+                    <span className={`qty-pill ${low ? 'low' : 'ok'}`}>
+                      {item.current_quantity} {item.unit}
+                    </span>
                   </button>
                 )
               })}
@@ -113,9 +130,7 @@ export default function Inventory() {
         ))
       )}
 
-      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add Item">
-        +
-      </button>
+      <button className="fab" onClick={() => setShowAdd(true)} aria-label="Add Item">+</button>
 
       {showAdd && (
         <ItemFormSheet onClose={() => setShowAdd(false)} onSave={handleAdd} />

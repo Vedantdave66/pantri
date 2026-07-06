@@ -10,6 +10,9 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
   const [threshold, setThreshold] = useState(
     item?.reorder_threshold != null ? String(item.reorder_threshold) : '1'
   )
+  const [expected, setExpected] = useState(
+    item?.expected_quantity != null ? String(item.expected_quantity) : ''
+  )
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -27,6 +30,7 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
         unit: unit.trim(),
         category,
         reorder_threshold: Number(threshold) || 0,
+        expected_quantity: expected === '' ? null : Number(expected),
       })
     } catch (err) {
       setError(err.message)
@@ -35,9 +39,9 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
   }
 
   return (
-    <BottomSheet title={isEdit ? 'Edit Item' : 'Add Item'} onClose={onClose}>
+    <BottomSheet title={isEdit ? item.name : 'Add Item'} onClose={onClose}>
       <form className="sheet-form" onSubmit={handleSubmit}>
-        {error && <div className="banner-error">{error}</div>}
+        {error && <div className="error-text">{error}</div>}
 
         <div>
           <label className="field-label" htmlFor="item-name">Name</label>
@@ -46,7 +50,7 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
             className="text-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Flour"
+            placeholder="e.g. Basmati Rice"
           />
         </div>
 
@@ -88,14 +92,30 @@ export default function ItemFormSheet({ item, onClose, onSave, onDelete }) {
           />
         </div>
 
+        <div>
+          <label className="field-label" htmlFor="item-expected">
+            Expected quantity (for discrepancy alerts, optional)
+          </label>
+          <input
+            id="item-expected"
+            className="text-input"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            value={expected}
+            onChange={(e) => setExpected(e.target.value)}
+            placeholder="Leave blank to skip checks"
+          />
+        </div>
+
         <div className="sheet-actions">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Item'}
+            {saving ? 'Saving…' : isEdit ? 'Save' : 'Add Item'}
           </button>
           {isEdit && (
             <button
               type="button"
-              className="btn-danger-text"
+              className="btn-text-danger"
               disabled={saving}
               onClick={() => onDelete && onDelete()}
             >
