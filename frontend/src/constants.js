@@ -70,3 +70,19 @@ export function timeAgo(iso) {
 export function formatTime(iso) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
+
+// Stable-within-a-day rotation, so copy feels alive without being random.
+export function dailyPick(arr) {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), 0, 0)
+  const day = Math.floor((now - start) / 86400000)
+  return arr[day % arr.length]
+}
+
+export function formatDuration(ms) {
+  const secs = Math.max(1, Math.round(ms / 1000))
+  if (secs < 60) return `${secs} seconds`
+  const m = Math.floor(secs / 60)
+  const s = secs % 60
+  return s ? `${m}m ${s}s` : `${m} minutes`
+}

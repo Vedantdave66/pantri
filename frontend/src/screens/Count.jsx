@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { api, clearSession } from '../api.js'
-import { groupByCategory, formatToday, timeAgo } from '../constants.js'
+import { groupByCategory, formatToday, timeAgo, dailyPick, formatDuration } from '../constants.js'
 import Toast from '../components/Toast.jsx'
 import { SkeletonList } from '../components/Skeleton.jsx'
 import { buzz } from '../haptics.js'
@@ -43,6 +43,22 @@ function Confetti() {
     </>
   )
 }
+
+const SUCCESS_TITLES = [
+  'Count submitted',
+  'All counted',
+  "Count's in",
+  'Done and dusted',
+  'Counted and closed',
+]
+
+const FRIDAY_TITLE = "That's the week"
+
+const NOTE_PLACEHOLDERS = [
+  'Optional note for the owner',
+  'Anything off? Note it here',
+  'Low, broken, or missing — note it',
+]
 
 function SuccessScreen({ title, subtitle, onLogout }) {
   return (
@@ -128,6 +144,9 @@ export default function Count({ role, userName }) {
   const [toast, setToast] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [alreadyDone, setAlreadyDone] = useState(false)
+  const [submitStats, setSubmitStats] = useState(null)
+  const startedAtRef = useRef(null)
+  const celebratedRef = useRef(false)
 
   useEffect(() => {
     const load = async () => {
@@ -143,6 +162,7 @@ export default function Count({ role, userName }) {
         }
         const data = await api.listItems()
         setItems(data)
+        startedAtRef.current = Date.now()
         const initial = {}
         data.forEach((item) => {
           initial[item.id] = isEmployee ? 0 : item.current_quantity
@@ -187,6 +207,15 @@ export default function Count({ role, userName }) {
     [items, touched]
   )
 
+  const allCounted = Boolean(items && items.length > 0 && touchedCount === items.length)
+
+  useEffect(() => {
+    if (isEmployee && allCounted && !celebratedRef.current) {
+      celebratedRef.current = true
+      buzz(15)
+    }
+  }, [isEmployee, allCounted])
+
   const changedEntries = useMemo(() => {
     if (!items) return []
     if (isEmployee) {
@@ -212,13 +241,15 @@ export default function Count({ role, userName }) {
       await api.submitCounts(changedEntries, isEmployee ? notes.trim() : null)
       buzz(18)
       if (isEmployee) {
+        const elapsed = startedAtRef.current ? Date.now() - startedAtRef.current : null
+        setSubmitStats({ count: changedEntries.length, elapsed })
         setSubmitted(true)
       } else {
         setItems((prev) =>
           prev.map((item) => ({ ...item, current_quantity: counts[item.id] }))
         )
         setTouched({})
-        setToast('Count saved')
+        setToast(`Saved ${changedEntries.length} item${changedEntries.length === 1 ? '' : 's'}`)
         setTimeout(() => setToast(''), 2000)
       }
     } catch (err) {
@@ -233,10 +264,21 @@ export default function Count({ role, userName }) {
   }
 
   if (submitted) {
+    const isFriday = new Date().getDay() === 5
+    const quickHands =
+      submitStats?.elapsed && submitStats.count > 3 && submitStats.elapsed / submitStats.count < 8000
+    const title = quickHands
+      ? 'Quick hands'
+      : isFriday
+        ? FRIDAY_TITLE
+        : dailyPick(SUCCESS_TITLES)
+    const subtitle = submitStats?.elapsed
+      ? `${submitStats.count} item${submitStats.count === 1 ? '' : 's'} in ${formatDuration(submitStats.elapsed)}`
+      : "You're done for today"
     return (
       <SuccessScreen
-        title="Count submitted"
-        subtitle="You're done for today"
+        title={title}
+        subtitle={subtitle}
         onLogout={isEmployee ? handleLogout : null}
       />
     )
@@ -267,11 +309,15 @@ export default function Count({ role, userName }) {
         <div className="count-progress-wrap">
           <div className="count-progress-label">
             <span>Progress</span>
-            <span>{touchedCount} of {items.length}</span>
+            {allCounted ? (
+              <span className="done">All counted</span>
+            ) : (
+              <span>{touchedCount} of {items.length}</span>
+            )}
           </div>
           <div className="count-progress-track">
             <div
-              className="count-progress-fill"
+              className={`count-progress-fill ${allCounted ? 'complete' : ''}`}
               style={{ width: `${(touchedCount / items.length) * 100}%` }}
             />
           </div>
@@ -301,7 +347,7 @@ export default function Count({ role, userName }) {
             <textarea
               id="count-notes"
               className="notes-input"
-              placeholder="Optional note for the owner"
+              placeholder={dailyPick(NOTE_PLACEHOLDERS)}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />

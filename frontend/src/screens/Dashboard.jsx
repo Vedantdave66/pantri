@@ -106,7 +106,13 @@ export default function Dashboard({ ownerName, onOpenReorder, onOpenCount, onAdd
           {today.submissions.length === 0 ? (
             <div className="empty-line">
               <ClockIcon size={20} />
-              <span>No counts yet today</span>
+              <span>
+                {new Date().getHours() < 11
+                  ? 'No counts yet — still early'
+                  : new Date().getHours() < 17
+                    ? 'No counts yet today'
+                    : 'No count came in today'}
+              </span>
             </div>
           ) : (
             <div className="list-group">

@@ -287,6 +287,19 @@ input[type="number"] {
 
 .login-wordmark .dot {
   color: var(--accent);
+  display: inline-block;
+  cursor: pointer;
+}
+
+.login-wordmark .dot.hop {
+  animation: hop 450ms var(--ease-spring);
+}
+
+@keyframes hop {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-12px) scale(1.15); }
+  65% { transform: translateY(2px) scale(0.95); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 .login-subtitle {
@@ -944,7 +957,22 @@ button.list-row:active {
   height: 100%;
   border-radius: 999px;
   background: var(--accent);
-  transition: width 300ms var(--ease-out);
+  transition: width 300ms var(--ease-out), background 300ms ease;
+}
+
+.count-progress-fill.complete {
+  background: var(--green);
+  animation: bar-pulse 600ms var(--ease-out);
+}
+
+@keyframes bar-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(45, 106, 79, 0.35); }
+  100% { box-shadow: 0 0 0 8px rgba(45, 106, 79, 0); }
+}
+
+.count-progress-label .done {
+  color: var(--green);
+  font-weight: 600;
 }
 
 .count-row {
@@ -1168,6 +1196,17 @@ button.list-row:active {
   padding: 48px 24px;
   text-align: center;
   gap: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.confetti.mini {
+  animation: confetti-drop-mini var(--dur, 1.6s) ease-in var(--delay, 0s) forwards;
+}
+
+@keyframes confetti-drop-mini {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--dx, 0px), 240px) rotate(var(--rot, 300deg)); opacity: 0; }
 }
 
 .empty-icon {
