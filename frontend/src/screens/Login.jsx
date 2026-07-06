@@ -6,6 +6,12 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [hop, setHop] = useState(false)
+
+  const hopDot = () => {
+    setHop(false)
+    requestAnimationFrame(() => setHop(true))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -29,7 +35,14 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
   return (
     <div className="login-screen">
       <div className="login-wordmark">
-        Pantri<span className="dot">.</span>
+        Pantri
+        <span
+          className={`dot ${hop ? 'hop' : ''}`}
+          onClick={hopDot}
+          onAnimationEnd={() => setHop(false)}
+        >
+          .
+        </span>
       </div>
       <div className="login-subtitle">Inventory for restaurants</div>
 

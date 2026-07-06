@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api, setSession } from '../api.js'
+import { greeting } from '../constants.js'
 import { BackspaceIcon } from '../components/Icons.jsx'
 import Avatar from '../components/Avatar.jsx'
 import { buzz } from '../haptics.js'
@@ -53,7 +54,7 @@ export default function PinLogin({ onLoggedIn, onManagerLogin }) {
       <div className="pin-screen">
         <div className="pin-welcome">
           <Avatar name={welcome} />
-          <div className="pin-welcome-name">Hi, {welcome.split(' ')[0]}</div>
+          <div className="pin-welcome-name">{greeting()}, {welcome.split(' ')[0]}</div>
           <div className="pin-welcome-sub">Opening today's count</div>
         </div>
       </div>
