@@ -1,7 +1,15 @@
 # Pantri
 
-Inventory tracking for independent restaurants — a mobile-first web app for
-tracking kitchen stock, doing daily counts, and generating reorder lists.
+Smart inventory for restaurants — a mobile-first web app for tracking kitchen
+stock, doing daily counts, and generating reorder lists.
+
+Two roles:
+
+- **Owner** — email/password login. Dashboard with today's count activity and
+  discrepancy alerts, full inventory management, reorder list, staff management.
+- **Employee** — 4-digit PIN login (created by the owner in the Staff tab).
+  Sees only the Count screen, submits one blind count per day with an optional
+  note for the owner.
 
 ## Stack
 
@@ -35,6 +43,10 @@ pantri/
 4. Copy that user's UUID and paste it into `supabase/seed.sql` in place of
    the placeholder `OWNER_USER_ID`, then run the seed script to load sample
    inventory.
+5. Run `supabase/migration_v2.sql` to add the `profiles` table (roles + PINs),
+   count attribution columns, and `items.expected_quantity`. It also backfills
+   an owner profile for every existing auth user. Employee accounts are then
+   created from inside the app (Staff tab), not in the Supabase dashboard.
 
 ### 2. Backend (FastAPI)
 
@@ -76,19 +88,28 @@ Open `http://localhost:5173` — sign in with the owner account created above.
 
 ## API endpoints
 
-| Method | Path                    | Description                                      |
-| ------ | ----------------------- | ------------------------------------------------- |
-| POST   | `/api/auth/login`       | Sign in with email/password, returns access token |
-| POST   | `/api/auth/logout`      | Sign out                                           |
-| GET    | `/api/items`            | List all items for the current user                |
-| POST   | `/api/items`            | Create an item                                     |
-| PATCH  | `/api/items/{id}`       | Update an item's name/unit/threshold/category       |
-| DELETE | `/api/items/{id}`       | Delete an item                                     |
-| POST   | `/api/items/{id}/count` | Update `current_quantity`, logs to `count_logs`     |
-| GET    | `/api/reorder`          | Items at or below their reorder threshold           |
+| Method | Path                        | Who      | Description                                        |
+| ------ | --------------------------- | -------- | --------------------------------------------------- |
+| POST   | `/api/auth/login`           | anyone   | Owner sign-in with email/password                    |
+| POST   | `/api/auth/pin-login`       | anyone   | Employee sign-in with 4-digit PIN                    |
+| POST   | `/api/auth/logout`          | anyone   | Sign out                                             |
+| GET    | `/api/me`                   | any auth | Current profile (id, role, full_name)                |
+| POST   | `/api/auth/create-employee` | owner    | Create employee (name + PIN)                          |
+| GET    | `/api/employees`            | owner    | List employees with last-active time                  |
+| DELETE | `/api/employees/{id}`       | owner    | Remove an employee                                    |
+| GET    | `/api/items`                | any auth | List items (quantities hidden for employees)          |
+| POST   | `/api/items`                | owner    | Create an item                                        |
+| PATCH  | `/api/items/{id}`           | owner    | Update name/unit/category/threshold/expected qty       |
+| DELETE | `/api/items/{id}`           | owner    | Delete an item                                        |
+| POST   | `/api/counts/submit`        | any auth | Batch count submission (+ optional note); employees limited to one per day |
+| GET    | `/api/counts/mine/today`    | any auth | Whether the caller already submitted today            |
+| POST   | `/api/items/{id}/count`     | any auth | Single-item count update (legacy)                     |
+| GET    | `/api/counts/today`         | owner    | Today's logs grouped into per-employee submissions    |
+| GET    | `/api/counts/latest`        | owner    | Latest count log per item                              |
+| GET    | `/api/reorder`              | owner    | Items at or below their reorder threshold              |
+| GET    | `/api/discrepancies`        | owner    | Today's counts >30% off `expected_quantity`            |
 
-All `/api/items*` and `/api/reorder` routes require `Authorization: Bearer <access_token>`
-from `/api/auth/login`.
+All routes except login/pin-login require `Authorization: Bearer <access_token>`.
 
 ## Deployment (Vercel)
 

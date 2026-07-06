@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { api, setToken } from '../api.js'
+import { api, setSession } from '../api.js'
 
-export default function Login({ onLoggedIn }) {
+export default function Login({ onLoggedIn, onStaffLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -13,7 +13,11 @@ export default function Login({ onLoggedIn }) {
     setLoading(true)
     try {
       const result = await api.login(email.trim(), password)
-      setToken(result.access_token)
+      setSession({
+        token: result.access_token,
+        role: result.user.role,
+        name: result.user.full_name || '',
+      })
       onLoggedIn()
     } catch (err) {
       setError(err.message || 'Unable to sign in')
@@ -24,10 +28,10 @@ export default function Login({ onLoggedIn }) {
 
   return (
     <div className="login-screen">
-      <div className="login-logo">Pantri</div>
-      <div className="login-subtitle">Inventory tracking for your kitchen</div>
+      <div className="login-wordmark">Pantri</div>
+      <div className="login-subtitle">Smart inventory for restaurants</div>
 
-      <form className="login-form" onSubmit={handleSubmit}>
+      <form className="login-card" onSubmit={handleSubmit}>
         {error && <div className="error-text">{error}</div>}
 
         <div>
@@ -60,6 +64,10 @@ export default function Login({ onLoggedIn }) {
           {loading ? 'Signing in…' : 'Sign In'}
         </button>
       </form>
+
+      <button className="login-alt-link" onClick={onStaffLogin}>
+        Staff member? Use PIN →
+      </button>
     </div>
   )
 }

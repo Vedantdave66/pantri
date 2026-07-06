@@ -15,23 +15,19 @@ function buildShareText(items) {
   return `Pantri Reorder List — ${date}\n${lines.join('\n')}`
 }
 
-export default function Reorder() {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function Reorder({ onBack }) {
+  const [items, setItems] = useState(null)
   const [error, setError] = useState('')
   const [toast, setToast] = useState('')
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true)
       setError('')
       try {
-        const data = await api.reorderList()
-        setItems(data)
+        setItems(await api.reorderList())
       } catch (err) {
         setError(err.message)
-      } finally {
-        setLoading(false)
+        setItems([])
       }
     }
     load()
@@ -44,55 +40,62 @@ export default function Reorder() {
         await navigator.share({ text })
         return
       } catch {
-        // user cancelled or share failed, fall back to clipboard
+        // user cancelled or share failed; fall back to clipboard
       }
     }
     try {
       await navigator.clipboard.writeText(text)
       setToast('Copied to clipboard ✓')
-      setTimeout(() => setToast(''), 2000)
     } catch {
       setToast('Unable to copy')
-      setTimeout(() => setToast(''), 2000)
     }
+    setTimeout(() => setToast(''), 2000)
   }
 
   return (
     <div className="screen">
       <header className="screen-header">
         <div>
-          <h1 className="screen-title">Reorder List</h1>
+          {onBack && (
+            <button className="back-btn" onClick={onBack}>← Back</button>
+          )}
+          <h1 className="screen-title">Reorder</h1>
         </div>
-        {items.length > 0 && (
-          <button className="header-action" onClick={handleShare}>
-            Share
-          </button>
+        {items && items.length > 0 && (
+          <button className="header-action" onClick={handleShare}>Share</button>
         )}
       </header>
 
       {error && <div className="banner-error">{error}</div>}
 
-      {loading ? (
-        <div className="loading-wrap">Loading…</div>
+      {items === null ? (
+        <div className="loading-wrap"><div className="spinner" /></div>
       ) : items.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-title">All stocked up 🎉</div>
-          <div>Nothing needs reordering right now.</div>
+          <div className="empty-check">✓</div>
+          <div className="empty-title">You're fully stocked</div>
+          <div className="empty-subtitle">Check back after next count</div>
         </div>
       ) : (
-        <div className="item-list" style={{ padding: '0 16px' }}>
-          {items.map((item) => (
-            <div className="reorder-row" key={item.id}>
-              <div className="item-info">
-                <div className="item-name">{item.name}</div>
-                <div className="reorder-detail">
-                  {item.current_quantity} {item.unit} on hand · reorder at {item.reorder_threshold}
+        <>
+          <div className="reorder-banner">
+            {items.length} item{items.length === 1 ? '' : 's'} need restocking
+          </div>
+          <div className="card-list">
+            {items.map((item) => {
+              const short = Math.max(0, item.reorder_threshold - item.current_quantity)
+              return (
+                <div className="reorder-card" key={item.id}>
+                  <div className="item-name">{item.name}</div>
+                  <div className="reorder-detail">
+                    {item.current_quantity} on hand · reorder at {item.reorder_threshold} {item.unit}
+                  </div>
+                  <div className="reorder-short">Short by {short} {item.unit}</div>
                 </div>
-              </div>
-              <span className="low-badge">LOW</span>
-            </div>
-          ))}
-        </div>
+              )
+            })}
+          </div>
+        </>
       )}
 
       <Toast message={toast} />
