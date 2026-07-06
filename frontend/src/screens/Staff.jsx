@@ -3,6 +3,8 @@ import { api } from '../api.js'
 import { timeAgo } from '../constants.js'
 import Avatar from '../components/Avatar.jsx'
 import BottomSheet from '../components/BottomSheet.jsx'
+import { SkeletonList } from '../components/Skeleton.jsx'
+import { PlusIcon, UsersIcon, TrashIcon, ChevronIcon } from '../components/Icons.jsx'
 
 function AddStaffSheet({ onClose, onCreate }) {
   const [name, setName] = useState('')
@@ -56,12 +58,13 @@ function AddStaffSheet({ onClose, onCreate }) {
             maxLength={4}
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            placeholder="••••"
+            placeholder="0000"
           />
         </div>
 
         <div className="sheet-actions">
           <button type="submit" className="btn-primary" disabled={saving}>
+            {saving && <span className="btn-spinner" />}
             {saving ? 'Creating…' : 'Create Account'}
           </button>
         </div>
@@ -75,6 +78,7 @@ export default function Staff() {
   const [error, setError] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [selected, setSelected] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const load = async () => {
     setError('')
@@ -97,9 +101,19 @@ export default function Staff() {
   }
 
   const handleDelete = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true)
+      return
+    }
     await api.deleteEmployee(selected.id)
     setSelected(null)
+    setConfirmDelete(false)
     load()
+  }
+
+  const closeDetail = () => {
+    setSelected(null)
+    setConfirmDelete(false)
   }
 
   return (
@@ -107,15 +121,21 @@ export default function Staff() {
       <header className="screen-header">
         <div>
           <h1 className="screen-title">Staff</h1>
+          <div className="screen-subtitle">
+            {employees ? `${employees.length} team member${employees.length === 1 ? '' : 's'}` : 'Loading…'}
+          </div>
         </div>
       </header>
 
       {error && <div className="banner-error">{error}</div>}
 
       {employees === null ? (
-        <div className="loading-wrap"><div className="spinner" /></div>
+        <SkeletonList rows={3} height={70} />
       ) : employees.length === 0 ? (
         <div className="empty-state">
+          <div className="empty-check" style={{ background: 'var(--saffron-soft)', color: 'var(--saffron-deep)' }}>
+            <UsersIcon size={38} />
+          </div>
           <div className="empty-title">No staff yet</div>
           <div className="empty-subtitle">
             Add a staff member so they can submit daily counts with a PIN.
@@ -134,6 +154,7 @@ export default function Staff() {
                     : 'Never logged in'}
                 </div>
               </div>
+              <span className="item-chevron"><ChevronIcon size={18} /></span>
             </button>
           ))}
         </div>
@@ -141,14 +162,21 @@ export default function Staff() {
 
       <div className="staff-add-wrap">
         <button className="btn-secondary" onClick={() => setShowAdd(true)}>
-          + Add Staff Member
+          <PlusIcon size={19} strokeWidth={2.2} /> Add Staff Member
         </button>
       </div>
 
       {showAdd && <AddStaffSheet onClose={() => setShowAdd(false)} onCreate={handleCreate} />}
 
       {selected && (
-        <BottomSheet title={selected.full_name} onClose={() => setSelected(null)}>
+        <BottomSheet onClose={closeDetail}>
+          <div className="account-sheet-head">
+            <Avatar name={selected.full_name} />
+            <div>
+              <div className="activity-name">{selected.full_name}</div>
+              <span className="account-role-badge">Employee</span>
+            </div>
+          </div>
           <div className="sheet-form">
             <div className="activity-time">
               {selected.last_active
@@ -157,7 +185,8 @@ export default function Staff() {
             </div>
             <div className="sheet-actions">
               <button className="btn-text-danger" onClick={handleDelete}>
-                Remove Staff Member
+                <TrashIcon size={18} />
+                {confirmDelete ? 'Tap again to confirm removal' : 'Remove Staff Member'}
               </button>
             </div>
           </div>

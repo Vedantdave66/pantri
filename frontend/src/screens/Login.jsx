@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api, setSession } from '../api.js'
+import { LogoMark } from '../components/Icons.jsx'
 
 export default function Login({ onLoggedIn, onStaffLogin }) {
   const [email, setEmail] = useState('')
@@ -28,8 +29,11 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
 
   return (
     <div className="login-screen">
-      <div className="login-wordmark">Pantri</div>
-      <div className="login-subtitle">Smart inventory for restaurants</div>
+      <div className="login-hero">
+        <span className="logo-mark"><LogoMark size={72} /></span>
+        <div className="login-wordmark">Pantri</div>
+        <div className="login-subtitle">Smart inventory for restaurants</div>
+      </div>
 
       <form className="login-card" onSubmit={handleSubmit}>
         {error && <div className="error-text">{error}</div>}
@@ -41,6 +45,7 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
             className="text-input"
             type="email"
             autoComplete="username"
+            placeholder="you@restaurant.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -54,6 +59,7 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
             className="text-input"
             type="password"
             autoComplete="current-password"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -61,6 +67,7 @@ export default function Login({ onLoggedIn, onStaffLogin }) {
         </div>
 
         <button className="btn-primary" type="submit" disabled={loading}>
+          {loading && <span className="btn-spinner" />}
           {loading ? 'Signing in…' : 'Sign In'}
         </button>
       </form>
